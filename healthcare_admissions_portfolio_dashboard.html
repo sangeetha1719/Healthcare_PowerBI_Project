@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Healthcare admissions analytics dashboard portfolio project">
+<title>Healthcare Admissions | Analytics Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy:#153b46; --teal:#287f83; --teal2:#55a6a3; --ink:#20333d;
+  --muted:#71828a; --line:#e4ecee; --bg:#f3f7f8; --white:#fff;
+  --pale:#eaf3f4; --gold:#d4b66d; --shadow:0 8px 24px rgba(22,55,65,.06);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,Segoe UI,Arial,sans-serif}
+.wrap{max-width:1440px;margin:auto;padding:26px}
+.topbar{background:var(--navy);color:#fff;border-radius:18px;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;box-shadow:var(--shadow)}
+.eyebrow{text-transform:uppercase;letter-spacing:1.7px;font-size:10px;font-weight:700;color:#a8d1d0}
+h1{font-size:25px;line-height:1.2;margin:7px 0 5px;font-weight:700}
+.subtitle{font-size:13px;color:#d1e2e3;margin:0}
+.top-meta{text-align:right;font-size:11px;line-height:1.8;color:#d1e2e3}
+.top-meta strong{color:white;font-size:12px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0}
+.filters{display:flex;gap:9px;flex-wrap:wrap}
+select,.reset{border:1px solid var(--line);border-radius:9px;padding:10px 13px;background:#fff;color:var(--ink);font-size:12px;outline:none}
+.reset{cursor:pointer;font-weight:600;color:var(--teal)}
+.status{font-size:11px;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:13px;margin-bottom:16px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.kpi{padding:17px 18px;min-height:108px;position:relative;overflow:hidden}
+.kpi:after{content:"";position:absolute;width:70px;height:70px;border-radius:50%;background:var(--pale);right:-22px;top:-25px}
+.kpi-label{font-size:11px;color:var(--muted);font-weight:600;position:relative;z-index:1}
+.kpi-value{font-size:27px;letter-spacing:-.8px;font-weight:700;margin:10px 0 3px;position:relative;z-index:1}
+.kpi-note{font-size:10px;color:#84949a;position:relative;z-index:1}
+.grid{display:grid;grid-template-columns:1.12fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.panel{padding:17px 18px;min-width:0}
+.panel.wide{grid-column:span 2}
+.panel-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:4px}
+.panel h2{font-size:14px;margin:0;font-weight:700}
+.panel-sub{font-size:10px;color:var(--muted);margin-top:5px}
+.tag{font-size:9px;color:var(--teal);background:#edf6f5;border-radius:20px;padding:5px 8px;white-space:nowrap;font-weight:700}
+.chart-wrap{height:220px;margin-top:12px;position:relative}
+.chart-wrap.short{height:190px}
+.insight{border-left:3px solid var(--gold);background:#fbfaf6;padding:12px 14px;border-radius:0 9px 9px 0;font-size:11px;line-height:1.6;color:#596a70;margin-top:13px}
+.insight strong{color:var(--ink)}
+.footer{display:flex;justify-content:space-between;gap:16px;padding:15px 3px 4px;color:#829197;font-size:10px}
+.footer strong{color:var(--navy)}
+.note{margin:0 0 14px;padding:10px 13px;border:1px dashed #cbdadb;border-radius:10px;color:#667b81;font-size:10px;line-height:1.5;background:#f9fbfb}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr 1fr}.panel.wide{grid-column:span 2}}
+@media(max-width:650px){.wrap{padding:13px}.topbar{padding:20px;display:block}.top-meta{text-align:left;margin-top:14px}.toolbar{align-items:flex-start;flex-direction:column}.kpis{grid-template-columns:repeat(2,1fr);gap:9px}.kpi{padding:14px;min-height:98px}.kpi-value{font-size:23px}.grid{grid-template-columns:1fr}.panel.wide{grid-column:auto}.chart-wrap{height:210px}.footer{display:block;line-height:1.8}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">Healthcare analytics • Portfolio project</div>
+      <h1>Healthcare Admissions Dashboard</h1>
+      <p class="subtitle">A single-page view of patient admissions, service utilization and billing patterns</p>
+    </div>
+    <div class="top-meta"><strong>POWER BI-INSPIRED REPORT</strong><br>Executive overview · Patient insights · Operations · Costs<br>Reporting period: sample snapshot</div>
+  </header>
+
+  <div class="toolbar">
+    <div class="filters">
+      <select id="yearFilter" aria-label="Filter by year"><option value="all">All years</option><option value="2019">2019</option><option value="2020">2020</option></select>
+      <select id="conditionFilter" aria-label="Filter by medical condition"><option value="all">All conditions</option><option>Arthritis</option><option>Asthma</option><option>Cancer</option><option>Diabetes</option><option>Hypertension</option><option>Obesity</option></select>
+      <select id="typeFilter" aria-label="Filter by admission type"><option value="all">All admission types</option><option>Urgent</option><option>Emergency</option><option>Elective</option></select>
+    </div>
+    <button class="reset" id="reset">Reset filters ↺</button>
+    <div class="status">Interactive portfolio preview · Illustrative values</div>
+  </div>
+
+  <div class="note"><strong>Portfolio note:</strong> This is an HTML presentation template based on your Power BI screenshot. The figures below are illustrative placeholders, not verified dataset results. Replace them with your final Power BI measures before publishing.</div>
+
+  <section class="kpis">
+    <article class="card kpi"><div class="kpi-label">Total admissions</div><div class="kpi-value" id="admissions">7,300</div><div class="kpi-note">Patient admission records</div></article>
+    <article class="card kpi"><div class="kpi-label">Average patient age</div><div class="kpi-value" id="age">51 yrs</div><div class="kpi-note">Years</div></article>
+    <article class="card kpi"><div class="kpi-label">Average length of stay</div><div class="kpi-value" id="los">15 days</div><div class="kpi-note">Days per admission</div></article>
+    <article class="card kpi"><div class="kpi-label">Total hospital stay</div><div class="kpi-value" id="stay">852K</div><div class="kpi-note">Patient-days</div></article>
+    <article class="card kpi"><div class="kpi-label">Total billing amount</div><div class="kpi-value" id="billing">$1.4B</div><div class="kpi-note">Billed amount</div></article>
+  </section>
+
+  <section class="grid">
+    <article class="card panel">
+      <div class="panel-title"><div><h2>Admissions by medical condition</h2><div class="panel-sub">Patient volume across condition groups</div></div><span class="tag">PATIENT MIX</span></div>
+      <div class="chart-wrap"><canvas id="conditionChart"></canvas></div>
+    </article>
+    <article class="card panel">
+      <div class="panel-title"><div><h2>Admissions by admission type</h2><div class="panel-sub">How patients enter the healthcare system</div></div><span class="tag">ACCESS</span></div>
+      <div class="chart-wrap"><canvas id="typeChart"></canvas></div>
+    </article>
+    <article class="card panel">
+      <div class="panel-title"><div><h2>Patient age distribution</h2><div class="panel-sub">Admissions by age band</div></div><span class="tag">DEMOGRAPHICS</span></div>
+      <div class="chart-wrap"><canvas id="ageChart"></canvas></div>
+    </article>
+
+    <article class="card panel wide">
+      <div class="panel-title"><div><h2>Billing by insurance provider</h2><div class="panel-sub">Total billed amount by payer</div></div><span class="tag">COST & BILLING</span></div>
+      <div class="chart-wrap short"><canvas id="insuranceChart"></canvas></div>
+      <div class="insight"><strong>Analysis prompt:</strong> Identify the payer with the highest total billing and compare its contribution with the other providers.</div>
+    </article>
+    <article class="card panel">
+      <div class="panel-title"><div><h2>Admissions by blood type</h2><div class="panel-sub">Distribution of recorded blood groups</div></div><span class="tag">PATIENT PROFILE</span></div>
+      <div class="chart-wrap short"><canvas id="bloodChart"></canvas></div>
+    </article>
+
+    <article class="card panel">
+      <div class="panel-title"><div><h2>Admissions by medication</h2><div class="panel-sub">Most frequently recorded medications</div></div><span class="tag">UTILIZATION</span></div>
+      <div class="chart-wrap short"><canvas id="medChart"></canvas></div>
+    </article>
+    <article class="card panel">
+      <div class="panel-title"><div><h2>Average billing by condition</h2><div class="panel-sub">Average billed amount per admission</div></div><span class="tag">COST PROFILE</span></div>
+      <div class="chart-wrap short"><canvas id="avgBillChart"></canvas></div>
+    </article>
+    <article class="card panel">
+      <div class="panel-title"><div><h2>Test results by condition</h2><div class="panel-sub">Share of recorded test-result categories</div></div><span class="tag">QUALITY</span></div>
+      <div class="chart-wrap short"><canvas id="testChart"></canvas></div>
+    </article>
+  </section>
+
+  <footer class="footer">
+    <div><strong>Healthcare Admissions Analytics</strong> · Personal data analytics portfolio</div>
+    <div>Built with HTML, CSS & Chart.js · Replace sample values with validated measures</div>
+  </footer>
+</div>
+<script>
+const teal='#287f83', teal2='#55a6a3', navy='#153b46', gold='#d4b66d', pale='#b9d5d5';
+Chart.defaults.font.family='Inter, Segoe UI, Arial, sans-serif';
+Chart.defaults.font.size=10;
+Chart.defaults.color='#71828a';
+Chart.defaults.plugins.legend.labels.usePointStyle=true;
+Chart.defaults.plugins.legend.labels.boxWidth=7;
+const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:navy,padding:10,cornerRadius:7}},scales:{x:{grid:{display:false},border:{display:false},ticks:{maxRotation:0}},y:{grid:{color:'#edf1f2'},border:{display:false},beginAtZero:true}}};
+const charts={};
+function make(id,type,labels,datasets,opts={}){charts[id]=new Chart(document.getElementById(id),{type,data:{labels,datasets},options:{...base,...opts}})}
+make('conditionChart','bar',['Arthritis','Asthma','Cancer','Diabetes','Hypertension','Obesity'],[{data:[1180,1040,1260,1190,1380,1250],backgroundColor:teal,borderRadius:4,barThickness:15}],{indexAxis:'y',scales:{x:{grid:{color:'#edf1f2'},border:{display:false},beginAtZero:true},y:{grid:{display:false},border:{display:false}}}});
+make('typeChart','doughnut',['Urgent','Emergency','Elective'],[{data:[42,34,24],backgroundColor:[teal,teal2,gold],borderWidth:0,hoverOffset:5}],{cutout:'68%',plugins:{legend:{display:true,position:'bottom'},tooltip:{backgroundColor:navy}}});
+make('ageChart','bar',['0–17','18–30','31–45','46–60','61–74','75+'],[{data:[90,980,1510,1760,1710,1250],backgroundColor:teal2,borderRadius:4}],{});
+make('insuranceChart','bar',['Aetna','Blue Cross','Cigna','Medicare','UnitedHealthcare'],[{data:[248,291,236,274,351],backgroundColor:teal,borderRadius:4,barThickness:17}],{indexAxis:'y',scales:{x:{grid:{color:'#edf1f2'},border:{display:false},beginAtZero:true,ticks:{callback:v=>'$'+v+'M'}},y:{grid:{display:false},border:{display:false}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw+'M'}}}});
+make('bloodChart','bar',['A+','A−','B+','B−','AB+','AB−','O+','O−'],[{data:[975,510,930,470,518,430,1020,447],backgroundColor:pale,borderRadius:3}],{});
+make('medChart','bar',['Lipitor','Ibuprofen','Aspirin','Paracetamol','Penicillin'],[{data:[1480,1460,1420,1390,1350],backgroundColor:teal2,borderRadius:3,barThickness:13}],{indexAxis:'y',scales:{x:{grid:{color:'#edf1f2'},border:{display:false},beginAtZero:true},y:{grid:{display:false},border:{display:false}}}});
+make('avgBillChart','bar',['Cancer','Hypertension','Arthritis','Asthma','Diabetes','Obesity'],[{data:[25.5,24.8,23.6,22.9,21.7,20.4],backgroundColor:teal,borderRadius:3,barThickness:12}],{indexAxis:'y',scales:{x:{grid:{color:'#edf1f2'},border:{display:false},beginAtZero:true,ticks:{callback:v=>'$'+v+'K'}},y:{grid:{display:false},border:{display:false}}}});
+make('testChart','bar',['Arthritis','Asthma','Cancer','Diabetes','Hypertension','Obesity'],[
+ {label:'Abnormal',data:[28,22,34,25,30,27],backgroundColor:teal},
+ {label:'Inconclusive',data:[22,25,18,24,20,23],backgroundColor:gold},
+ {label:'Normal',data:[50,53,48,51,50,50],backgroundColor:pale}
+],{scales:{x:{stacked:true,grid:{display:false},border:{display:false}},y:{stacked:true,max:100,grid:{color:'#edf1f2'},border:{display:false},ticks:{callback:v=>v+'%'}}},plugins:{legend:{display:true,position:'bottom'},tooltip:{backgroundColor:navy,callbacks:{label:c=>c.dataset.label+': '+c.raw+'%'}}}});
+document.getElementById('reset').addEventListener('click',()=>{document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);});
+document.querySelectorAll('select').forEach(s=>s.addEventListener('change',()=>{
+  // Filters are included as a presentation control. Connect them to your validated data model if you add real records.
+  document.querySelector('.status').textContent='Selected: '+[...document.querySelectorAll('select')].map(x=>x.options[x.selectedIndex].text).join(' · ');
+}));
+</script>
+</body>
+</html>
